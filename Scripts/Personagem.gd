@@ -1,65 +1,69 @@
 extends Node
-
 class_name Personagem
 
-# ===== ATRIBUTOS PRINCIPAIS =====
-var nome: String = "Player"
-var genero: String = "Indefinido"
+var nome: String = "Jogador"
 
 # Status
-var fome: float = 100
-var saude: float = 100
-var energia: float = 100
-var humor: float = 100
-var estresse: float = 0
+var fome: int = 100
+var saude: int = 100
+var energia: int = 100
+var social_xp: int = 0
 
 # Economia
-var saldo: float = 50
+var saldo: int = 50
 
 # Transporte
-var veiculo: String = "Bicicleta Básica"
+var veiculo_id: String = "bike_basic"  # usa IDs do SistemaVeiculos
+var veiculo_nome: String = "Bicicleta Urbana"
 
-# Relacionamentos
-var parceiro = null
-var filhos: Array = []
+func trabalhar(tipo: String) -> int:
+	var ganho := 0
+	match tipo:
+		"ENTREGA":
+			ganho = 20
+		"UBER":
+			ganho = 30
+		_:
+			ganho = 10
+	saldo += ganho
 
-# ===== FUNÇÕES =====
+	# custo de energia/fome
+	energia = clamp(energia - 8, 0, 100)
+	fome = clamp(fome - 6, 0, 100)
 
-func comer(valor: float):
-	fome = clamp(fome + valor, 0, 100)
+	return ganho
 
-func descansar(valor: float):
-	energia = clamp(energia + valor, 0, 100)
-	estresse = clamp(estresse - 5, 0, 100)
-
-func trabalhar(tipo: String):
-	if energia < 20:
-		print("Você está muito cansado para trabalhar.")
-		return
-	
-	if tipo == "entrega":
-		saldo += 20
-	elif tipo == "uber":
-		saldo += 30
-	
-	energia -= 15
-	estresse += 10
-	fome -= 10
-
-func comprar(valor: float) -> bool:
-	if saldo >= valor:
-		saldo -= valor
+func comprar(preco: int) -> bool:
+	if saldo >= preco:
+		saldo -= preco
 		return true
 	return false
 
-func atualizar_status():
-	fome -= 0.05
-	energia -= 0.03
-	
-	if fome <= 0:
-		saude -= 0.1
-	
-	fome = clamp(fome, 0, 100)
-	energia = clamp(energia, 0, 100)
-	saude = clamp(saude, 0, 100)
+func atualizar_status_por_tempo() -> void:
+	# Ajuste leve por minuto/hora (depois refinamos)
+	fome = clamp(fome - 1, 0, 100)
+	energia = clamp(energia - 1, 0, 100)
+	if fome <= 10 or energia <= 10:
+		saude = clamp(saude - 1, 0, 100)
 
+func to_dict() -> Dictionary:
+	return {
+		"nome": nome,
+		"fome": fome,
+		"saude": saude,
+		"energia": energia,
+		"social_xp": social_xp,
+		"saldo": saldo,
+		"veiculo_id": veiculo_id,
+		"veiculo_nome": veiculo_nome
+	}
+
+func from_dict(d: Dictionary) -> void:
+	nome = str(d.get("nome", nome))
+	fome = int(d.get("fome", fome))
+	saude = int(d.get("saude", saude))
+	energia = int(d.get("energia", energia))
+	social_xp = int(d.get("social_xp", social_xp))
+	saldo = int(d.get("saldo", saldo))
+	veiculo_id = str(d.get("veiculo_id", veiculo_id))
+	veiculo_nome = str(d.get("veiculo_nome", veiculo_nome))
